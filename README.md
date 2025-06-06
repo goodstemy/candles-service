@@ -1,7 +1,7 @@
 
 # candles-service 🛠️
 
-Sync 1m candles from provider to db. Also support tech-indicators.
+Syncing 1m candles from Hyperliquid provider to master DB.
 
 ## Getting Started 🚀
 
