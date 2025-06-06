@@ -7,7 +7,6 @@ export default class Coins extends BaseModel {
   }
 
   async set(name: string, decimals: number, maxLeverage: number) {
-    console.log('+++');
     this.conn
       .raw(
         `

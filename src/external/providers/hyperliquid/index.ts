@@ -38,7 +38,7 @@ class HyperliquidWS {
     for (const { name, szDecimals, maxLeverage } of this.coins) {
       await this.coinsModel.set(name, szDecimals, maxLeverage);
 
-      Logger.info(`Subscription sent: ${name}`);
+      // Logger.info(`Subscription sent: ${name}`);
       this.ws.send(
         JSON.stringify({
           method: 'subscribe',
