@@ -1,9 +1,9 @@
-import z from 'zod';
-
-const isString = z.string();
+import Hyperliquid from './external/providers/hyperliquid';
 
 function main() {
-  console.log(isString.parse('Hello TypeScript!'));
+  const hl = new Hyperliquid();
+
+  hl.start();
 }
 
 main();

@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS candles;
+
+DROP TABLE IF EXISTS coins;
+
+DROP INDEX IF EXISTS idx_id_created_ts;
