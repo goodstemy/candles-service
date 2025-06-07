@@ -3,6 +3,7 @@ import config from '../../../config';
 import Logger from 'js-logger';
 import Candles from '../../../models/candles';
 import Coins from '../../../models/coins';
+import { setTimeout } from 'node:timers/promises';
 
 type Coin = {
   name: string;
@@ -11,6 +12,7 @@ type Coin = {
 };
 
 class HyperliquidWS {
+  pingPongTimeout = 60_000;
   symbolToPrice: Map<string, number>;
   lastUpdMinute: Map<string, number>;
   ws: WebSocket;
@@ -38,7 +40,6 @@ class HyperliquidWS {
     for (const { name, szDecimals, maxLeverage } of this.coins) {
       await this.coinsModel.set(name, szDecimals, maxLeverage);
 
-      // Logger.info(`Subscription sent: ${name}`);
       this.ws.send(
         JSON.stringify({
           method: 'subscribe',
@@ -50,6 +51,17 @@ class HyperliquidWS {
         }),
       );
     }
+
+    await setTimeout(this.pingPongTimeout);
+    this.ping();
+  }
+
+  ping() {
+    this.ws.send(
+      JSON.stringify({
+        method: 'ping',
+      }),
+    );
   }
 
   async processWsMessage(_wsMessage: any) {
@@ -59,6 +71,10 @@ class HyperliquidWS {
       case 'subscriptionResponse':
         const sub = wsMessage.data.subscription;
         Logger.log(`Subscribed to ${sub.type} ${sub.coin}(${sub.interval})`);
+        break;
+      case 'pong':
+        await setTimeout(this.pingPongTimeout);
+        this.ping();
         break;
       case 'candle':
         const { data } = wsMessage;
@@ -79,7 +95,14 @@ class HyperliquidWS {
           now.setSeconds(0);
           now.setMilliseconds(0);
 
-          this.candlesModel.set(data.s, price, new Date(data.T), now);
+          this.candlesModel.set(
+            data.s,
+            price,
+            data.v,
+            data.n,
+            new Date(data.T),
+            now,
+          );
         }
 
         this.symbolToPrice.set(data.s, price);
