@@ -31,7 +31,7 @@ class HyperliquidWS {
   start() {
     this.ws = new WebSocket(config.hyperliquid.wsHost);
 
-    this.ws.on('error', (err) => Logger.error(err));
+    this.ws.on('error', (err) => Logger.error('ws error', err));
     this.ws.on('message', this.processWsMessage.bind(this));
     this.ws.on('open', () => this.init());
   }
