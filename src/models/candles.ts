@@ -1,5 +1,6 @@
 import Logger from 'js-logger';
 import BaseModel from './base-model';
+import { Candle } from '../external/types';
 
 export default class Candles extends BaseModel {
   constructor() {
@@ -26,5 +27,9 @@ export default class Candles extends BaseModel {
         [coin, price, volume, nTrades, extTs, createTs],
       )
       .catch(Logger.error);
+  }
+
+  async setMany(candles: Candle[]) {
+    console.log('++candles', candles);
   }
 }

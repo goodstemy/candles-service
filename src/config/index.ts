@@ -8,6 +8,8 @@ const isTestnet = process.env.TESTNET === 'true';
 
 export default {
   hyperliquid: {
+    // @ts-ignore
+    enabled: process.env.PROVIDER_HYPERLIQUID_ENABLED === '1',
     privateKey: process.env.WEB3_PRIVATE_KEY,
     testnet: isTestnet,
     publicAddress: process.env.PUBLIC_ADDRESS,
@@ -18,6 +20,11 @@ export default {
     //   ? 'wss://api.hyperliquid-testnet.xyz/ws'
     //   : 'wss://api.hyperliquid.xyz/ws',
     wsHost: 'wss://api.hyperliquid.xyz/ws', // Using only mainnet because of testnet ws issues
+  },
+  binance: {
+    // @ts-ignore
+    enabled: process.env.PROVIDER_BINANCE_ENABLED === '1',
+    wsHost: 'wss://stream.binance.com:9443',
   },
   db: {
     host: process.env.DB_HOST,

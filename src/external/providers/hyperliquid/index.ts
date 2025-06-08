@@ -1,38 +1,40 @@
 import WebSocket from 'ws';
 import config from '../../../config';
 import Logger from 'js-logger';
-import Candles from '../../../models/candles';
 import Coins from '../../../models/coins';
 import { setTimeout } from 'node:timers/promises';
-
-type Coin = {
-  name: string;
-  szDecimals: number;
-  maxLeverage: number;
-};
+import CandleAggregator from 'src/candle-aggregator';
+import { Coin } from '../../types';
 
 class HyperliquidWS {
+  serviceName = 'HyperliquidWS';
   pingPongTimeout = 60_000;
   symbolToPrice: Map<string, number>;
   lastUpdMinute: Map<string, number>;
   ws: WebSocket;
   coinsModel: Coins;
-  candlesModel: Candles;
   coins: Coin[];
+  candleAggregator: CandleAggregator;
 
-  constructor(coins: Coin[]) {
+  constructor(coins: Coin[], ca: CandleAggregator) {
     this.coins = coins;
     this.symbolToPrice = new Map();
     this.lastUpdMinute = new Map();
-    this.candlesModel = new Candles();
     this.coinsModel = new Coins();
+    this.candleAggregator = ca;
   }
 
   start() {
     this.ws = new WebSocket(config.hyperliquid.wsHost);
 
-    this.ws.on('error', (err) => Logger.error('ws error', err));
-    this.ws.on('message', this.processWsMessage.bind(this));
+    this.ws.on('error', async (err) => {
+      Logger.error(this.serviceName, err);
+
+      await setTimeout(10_000);
+
+      this.start();
+    });
+    this.ws.on('message', (msg) => this.processWsMessage(msg));
     this.ws.on('open', () => this.init());
   }
 
@@ -70,7 +72,6 @@ class HyperliquidWS {
     switch (wsMessage.channel) {
       case 'subscriptionResponse':
         const sub = wsMessage.data.subscription;
-        Logger.log(`Subscribed to ${sub.type} ${sub.coin}(${sub.interval})`);
         break;
       case 'pong':
         await setTimeout(this.pingPongTimeout);
@@ -85,25 +86,17 @@ class HyperliquidWS {
             parseFloat(data.c)) /
           4;
 
-        const d = new Date();
-        const minutes = d.getMinutes();
+        const now = new Date();
 
-        if (this.lastUpdMinute.get(data.s) !== minutes) {
-          this.lastUpdMinute.set(data.s, d.getMinutes());
-
-          const now = new Date();
-          now.setSeconds(0);
-          now.setMilliseconds(0);
-
-          this.candlesModel.set(
-            data.s,
-            price,
-            data.v,
-            data.n,
-            new Date(data.T),
-            now,
-          );
-        }
+        this.candleAggregator.set({
+          exchange: this.serviceName,
+          coin: data.s,
+          price,
+          volume: data.v,
+          nTrades: data.n,
+          extTs: new Date(data.T),
+          createTs: now,
+        });
 
         this.symbolToPrice.set(data.s, price);
         break;
@@ -112,33 +105,47 @@ class HyperliquidWS {
 }
 
 export default class Hyperliquid {
+  serviceName: 'Hyperliquid';
+  coinsModel: Coins;
   ws: HyperliquidWS;
   symbolToIndex: Map<string, number>;
+  candleAggregator: CandleAggregator;
 
-  constructor() {}
+  constructor(ca: CandleAggregator) {
+    this.coinsModel = new Coins();
+    this.candleAggregator = ca;
+  }
 
   async start() {
-    const coins = await this.getCoins();
+    let coins = await this.getCoins();
+    if (!coins || !coins.length) {
+      coins = await this.coinsModel.get();
+    }
 
-    this.ws = new HyperliquidWS(coins);
+    this.ws = new HyperliquidWS(coins, this.candleAggregator);
 
     return this.ws.start();
   }
 
   async getCoins() {
-    const response = await fetch('https://api.hyperliquid.xyz/info', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'meta',
-      }),
-    });
+    try {
+      const response = await fetch('https://api.hyperliquid.xyz/info', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'meta',
+        }),
+      });
 
-    const json = await response.json();
+      const json = await response.json();
 
-    //@ts-ignore
-    return json.universe.filter((el) => !el.isDelisted);
+      //@ts-ignore
+      return json.universe.filter((el) => !el.isDelisted);
+    } catch (error) {
+      Logger.error(error);
+      return [];
+    }
   }
 }
