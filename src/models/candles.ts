@@ -30,6 +30,30 @@ export default class Candles extends BaseModel {
   }
 
   async setMany(candles: Candle[]) {
-    console.log('++candles', candles);
+    let query =
+      'INSERT INTO candles (coin_id, price, volume, trades, ext_ts, created_ts) VALUES ';
+    let params = [];
+
+    for (let i = 0; i < candles.length; i++) {
+      const candle = candles[i];
+      let endL = '';
+
+      if (i === candles.length - 1) {
+        endL = ';';
+      } else {
+        endL = ',';
+      }
+
+      query += `(?, ?, ?, ?, ?, NOW())${endL}`;
+      params.push(
+        candle.coinId,
+        candle.price,
+        candle.volume,
+        candle.nTrades,
+        candle.extTs,
+      );
+    }
+
+    await this.conn.raw(query, params).catch(Logger.error);
   }
 }

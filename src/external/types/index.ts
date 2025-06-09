@@ -6,6 +6,8 @@ export type Coin = {
 };
 
 export type Candle = {
+  // exchange: string;
+  coinId: number;
   coin: string;
   price: number;
   volume: number;

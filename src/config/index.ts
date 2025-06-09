@@ -7,6 +7,7 @@ Logger.useDefaults();
 const isTestnet = process.env.TESTNET === 'true';
 
 export default {
+  fillCoins: process.env.FILL_COINS === '1',
   hyperliquid: {
     // @ts-ignore
     enabled: process.env.PROVIDER_HYPERLIQUID_ENABLED === '1',

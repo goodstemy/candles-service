@@ -23,7 +23,7 @@ export default class Coins extends BaseModel {
     const result = await this.conn
       .raw(
         `
-      SELECT id, name, max_leverage AS "maxLeverage", decimals AS "szDecimals" FROM coins;
+      SELECT id, name, max_leverage AS "maxLeverage", decimals AS "szDecimals" FROM coins WHERE enabled;
     `,
       )
       .catch(Logger.error);

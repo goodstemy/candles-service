@@ -15,8 +15,8 @@ export interface ICandleAggregatorSetParams {
 }
 
 export default class CandleAggregator {
-  // BTC->HyperLiquid->price
-  // BTC->Binance->price
+  // BTC->HyperLiquid->Candle
+  // BTC->Binance->Candle
   coinPrices: Map<string, Map<string, Candle>>;
   lastUpdMinute: number;
   candles: Candles;
@@ -58,7 +58,7 @@ export default class CandleAggregator {
     // BTC->Candle (mid price by hypeliquid, binance...)
     const totalMidPriceData: Map<string, Candle> = new Map();
 
-    for (const [coin, exchange] of this.coinPrices.entries()) {
+    for (const [coin, inner] of this.coinPrices.entries()) {
       if (!totalMidPriceData.get(coin)) {
         //@ts-ignore
         totalMidPriceData.set(coin, {
@@ -67,20 +67,21 @@ export default class CandleAggregator {
       }
 
       let exchangeCount = 0;
-      for (const inner of exchange.values()) {
+      for (const candle of inner.values()) {
         exchangeCount++;
+
         totalMidPriceData.set(coin, {
+          ...candle,
           // @ts-ignore
-          price: inner.price + totalMidPriceData.get(coin).price,
-          ...inner,
+          price: candle.price + totalMidPriceData.get(coin).price,
         });
       }
 
       // @ts-ignore
       totalMidPriceData.set(coin, {
+        ...totalMidPriceData.get(coin),
         // @ts-ignore
         price: totalMidPriceData.get(coin).price / exchangeCount,
-        ...totalMidPriceData.get(coin),
       });
     }
 
@@ -95,16 +96,29 @@ export default class CandleAggregator {
       return;
     }
 
-    const inner = new Map();
-    inner.set(params.exchange, {
-      id: this.coinIdHelper.get(params.coin),
+    const coinId = this.coinIdHelper.get(params.coin);
+
+    if (!coinId) {
+      throw new Error(`CoinId: ${params.coin} not found!`);
+    }
+
+    const candle = {
+      coinId,
       coin: params.coin,
       price: params.price,
       volume: params.volume,
       nTrades: params.nTrades,
       extTs: params.extTs,
-    });
+    };
 
-    this.coinPrices.set(params.coin, inner);
+    const exist = this.coinPrices.get(params.coin);
+    if (!exist) {
+      const inner = new Map();
+      inner.set(params.exchange, candle);
+      this.coinPrices.set(params.coin, inner);
+      return;
+    }
+
+    exist.set(params.exchange, candle);
   }
 }

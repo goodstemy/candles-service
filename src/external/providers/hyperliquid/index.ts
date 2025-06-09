@@ -70,9 +70,6 @@ class HyperliquidWS {
     const wsMessage = JSON.parse(_wsMessage);
 
     switch (wsMessage.channel) {
-      case 'subscriptionResponse':
-        const sub = wsMessage.data.subscription;
-        break;
       case 'pong':
         await setTimeout(this.pingPongTimeout);
         this.ping();
@@ -117,7 +114,12 @@ export default class Hyperliquid {
   }
 
   async start() {
-    let coins = await this.getCoins();
+    let coins = [];
+
+    if (config.fillCoins) {
+      coins = await this.getCoins();
+    }
+
     if (!coins || !coins.length) {
       coins = await this.coinsModel.get();
     }
