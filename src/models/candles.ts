@@ -30,6 +30,10 @@ export default class Candles extends BaseModel {
   }
 
   async setMany(candles: Candle[]) {
+    if (!candles.length) {
+      return;
+    }
+
     let query =
       'INSERT INTO candles (coin_id, price, volume, trades, ext_ts, created_ts) VALUES ';
     let params = [];
@@ -48,12 +52,15 @@ export default class Candles extends BaseModel {
       params.push(
         candle.coinId,
         candle.price,
-        candle.volume,
+        candle.volume || 0,
         candle.nTrades,
         candle.extTs,
       );
     }
 
-    await this.conn.raw(query, params).catch(Logger.error);
+    await this.conn.raw(query, params).catch((error) => {
+      Logger.info(`Broken query:`, query);
+      Logger.error(error);
+    });
   }
 }

@@ -63,6 +63,7 @@ export default class CandleAggregator {
         //@ts-ignore
         totalMidPriceData.set(coin, {
           price: 0,
+          volume: 0,
         });
       }
 
@@ -74,6 +75,8 @@ export default class CandleAggregator {
           ...candle,
           // @ts-ignore
           price: candle.price + totalMidPriceData.get(coin).price,
+          // @ts-ignore
+          volume: candle.volume + totalMidPriceData.get(coin).volume,
         });
       }
 
