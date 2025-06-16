@@ -52,7 +52,7 @@ export default class Candles extends BaseModel {
       params.push(
         candle.coinId,
         candle.price,
-        candle.volume || 0,
+        candle.volume || '0',
         candle.nTrades,
         candle.extTs,
       );
@@ -60,6 +60,7 @@ export default class Candles extends BaseModel {
 
     await this.conn.raw(query, params).catch((error) => {
       Logger.info(`Broken query:`, query);
+      Logger.info(`Params for broken query:`, params);
       Logger.error(error);
     });
   }

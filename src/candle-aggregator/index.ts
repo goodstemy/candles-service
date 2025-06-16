@@ -74,9 +74,10 @@ export default class CandleAggregator {
         totalMidPriceData.set(coin, {
           ...candle,
           // @ts-ignore
-          price: candle.price + totalMidPriceData.get(coin).price,
-          // @ts-ignore
-          volume: candle.volume + totalMidPriceData.get(coin).volume,
+          price: parseFloat(candle.price) + totalMidPriceData.get(coin).price,
+          volume:
+            // @ts-ignore
+            parseFloat(candle.volume) + totalMidPriceData.get(coin).volume,
         });
       }
 
