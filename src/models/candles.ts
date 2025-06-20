@@ -48,13 +48,19 @@ export default class Candles extends BaseModel {
         endL = ',';
       }
 
-      query += `(?, ?, ?, ?, ?, NOW())${endL}`;
+      query += `(?, ?, ?, ?, ?, ?)${endL}`;
+      const now = new Date();
+
+      now.setSeconds(0);
+      now.setMilliseconds(0);
+
       params.push(
         candle.coinId,
         candle.price,
         candle.volume || '0',
         candle.nTrades,
         candle.extTs,
+        now,
       );
     }
 
