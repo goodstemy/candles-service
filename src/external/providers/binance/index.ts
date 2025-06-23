@@ -92,6 +92,11 @@ class BinanceWS {
 
         return;
       }
+
+      if (k.x !== true) {
+        return;
+      }
+
       const price =
         (parseFloat(k.o) +
           parseFloat(k.h) +

@@ -15,6 +15,8 @@ class HyperliquidWS {
   coinsModel: Coins;
   coins: Coin[];
   candleAggregator: CandleAggregator;
+  n = 0;
+  lastCandle = null;
 
   constructor(coins: Coin[], ca: CandleAggregator) {
     this.coins = coins;
@@ -30,6 +32,8 @@ class HyperliquidWS {
     this.ws.on('error', async (err) => {
       Logger.error(this.serviceName, err);
 
+      this.n = 0;
+      this.lastCandle = null;
       await setTimeout(10_000);
 
       this.start();
@@ -83,19 +87,31 @@ class HyperliquidWS {
             parseFloat(data.c)) /
           4;
 
-        const now = new Date();
+        if (data.n < this.n) {
+          const now = new Date();
 
-        this.candleAggregator.set({
-          exchange: this.serviceName,
-          coin: data.s,
-          price,
-          volume: data.v,
-          nTrades: data.n,
-          extTs: new Date(data.T),
-          createTs: now,
-        });
+          this.candleAggregator.set({
+            exchange: this.serviceName,
+            // @ts-ignore
+            coin: this.lastCandle.s,
+            price,
+            // @ts-ignore
+            volume: this.lastCandle.v,
+            // @ts-ignore
+            nTrades: this.lastCandle.n,
+            // @ts-ignore
+            extTs: new Date(this.lastCandle.T),
+            createTs: now,
+          });
 
-        this.symbolToPrice.set(data.s, price);
+          this.n = 0;
+          this.lastCandle = null;
+          this.symbolToPrice.set(data.s, price);
+          return;
+        }
+
+        this.lastCandle = data;
+        this.n = data.n;
         break;
     }
   }

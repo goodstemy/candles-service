@@ -64,6 +64,7 @@ export default class CandleAggregator {
         totalMidPriceData.set(coin, {
           price: 0,
           volume: 0,
+          nTrades: 0,
         });
       }
 
@@ -71,13 +72,17 @@ export default class CandleAggregator {
       for (const candle of inner.values()) {
         exchangeCount++;
 
+        const exist = totalMidPriceData.get(coin);
+
         totalMidPriceData.set(coin, {
           ...candle,
           // @ts-ignore
-          price: parseFloat(candle.price) + totalMidPriceData.get(coin).price,
+          price: parseFloat(candle.price) + exist.price,
           volume:
             // @ts-ignore
-            parseFloat(candle.volume) + totalMidPriceData.get(coin).volume,
+            parseFloat(candle.volume) + exist.volume,
+          // @ts-ignore
+          nTrades: candle.nTrades + exist.nTrades,
         });
       }
 
