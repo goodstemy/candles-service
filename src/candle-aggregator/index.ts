@@ -7,7 +7,10 @@ import { setTimeout } from 'node:timers/promises';
 export interface ICandleAggregatorSetParams {
   exchange: string;
   coin: string;
-  price: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
   volume: number;
   nTrades: number;
   extTs: Date;
@@ -33,7 +36,7 @@ export default class CandleAggregator {
     this.canSet = true;
 
     this.prepare().then(async () => {
-      cron.schedule('* * * * *', () => this.save());
+      cron.schedule('10 * * * * *', () => this.save());
     });
   }
 
@@ -58,11 +61,16 @@ export default class CandleAggregator {
     // BTC->Candle (mid price by hypeliquid, binance...)
     const totalMidPriceData: Map<string, Candle> = new Map();
 
+    console.log(this.coinPrices);
+
     for (const [coin, inner] of this.coinPrices.entries()) {
       if (!totalMidPriceData.get(coin)) {
         //@ts-ignore
         totalMidPriceData.set(coin, {
-          price: 0,
+          o: 0,
+          h: 0,
+          l: 0,
+          c: 0,
           volume: 0,
           nTrades: 0,
         });
@@ -77,7 +85,13 @@ export default class CandleAggregator {
         totalMidPriceData.set(coin, {
           ...candle,
           // @ts-ignore
-          price: parseFloat(candle.price) + exist.price,
+          o: parseFloat(candle.o) + exist.o,
+          // @ts-ignore
+          h: parseFloat(candle.h) + exist.h,
+          // @ts-ignore
+          l: parseFloat(candle.l) + exist.l,
+          // @ts-ignore
+          c: parseFloat(candle.c) + exist.c,
           volume:
             // @ts-ignore
             parseFloat(candle.volume) + exist.volume,
@@ -90,9 +104,17 @@ export default class CandleAggregator {
       totalMidPriceData.set(coin, {
         ...totalMidPriceData.get(coin),
         // @ts-ignore
-        price: totalMidPriceData.get(coin).price / exchangeCount,
+        o: totalMidPriceData.get(coin).o / exchangeCount,
+        // @ts-ignore
+        h: totalMidPriceData.get(coin).h / exchangeCount,
+        // @ts-ignore
+        l: totalMidPriceData.get(coin).l / exchangeCount,
+        // @ts-ignore
+        c: totalMidPriceData.get(coin).c / exchangeCount,
       });
     }
+
+    console.log(totalMidPriceData);
 
     await this.candles.setMany([...totalMidPriceData.values()]);
 
@@ -114,7 +136,10 @@ export default class CandleAggregator {
     const candle = {
       coinId,
       coin: params.coin,
-      price: params.price,
+      o: params.o,
+      h: params.h,
+      l: params.l,
+      c: params.c,
       volume: params.volume,
       nTrades: params.nTrades,
       extTs: params.extTs,

@@ -9,7 +9,10 @@ export type Candle = {
   // exchange: string;
   coinId: number;
   coin: string;
-  price: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
   volume: number;
   nTrades: number;
   extTs: Date;

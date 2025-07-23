@@ -35,7 +35,7 @@ export default class Candles extends BaseModel {
     }
 
     let query =
-      'INSERT INTO candles (coin_id, price, volume, trades, ext_ts, created_ts) VALUES ';
+      'INSERT INTO candles (coin_id, o, h, l, c, volume, trades, ext_ts, created_ts) VALUES ';
     let params = [];
 
     for (let i = 0; i < candles.length; i++) {
@@ -48,7 +48,7 @@ export default class Candles extends BaseModel {
         endL = ',';
       }
 
-      query += `(?, ?, ?, ?, ?, ?)${endL}`;
+      query += `(?, ?, ?, ?, ?, ?, ?, ?, ?)${endL}`;
       const now = new Date();
 
       now.setSeconds(0);
@@ -56,7 +56,10 @@ export default class Candles extends BaseModel {
 
       params.push(
         candle.coinId,
-        candle.price,
+        candle.o,
+        candle.h,
+        candle.l,
+        candle.c,
         candle.volume || '0',
         candle.nTrades,
         candle.extTs,

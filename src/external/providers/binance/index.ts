@@ -97,17 +97,13 @@ class BinanceWS {
         return;
       }
 
-      const price =
-        (parseFloat(k.o) +
-          parseFloat(k.h) +
-          parseFloat(k.l) +
-          parseFloat(k.c)) /
-        4;
-
       this.candleAggregator.set({
         exchange: this.serviceName,
         coin,
-        price,
+        o: parseFloat(k.o),
+        h: parseFloat(k.h),
+        l: parseFloat(k.l),
+        c: parseFloat(k.c),
         volume: k.v,
         nTrades: k.n,
         extTs: new Date(k.T),
@@ -129,7 +125,5 @@ export default class Binance {
 
   async start() {
     this.ws = new BinanceWS(this.candleAggregator);
-
-    // return this.ws.start();
   }
 }

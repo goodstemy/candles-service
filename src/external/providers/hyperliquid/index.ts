@@ -9,7 +9,6 @@ import { Coin } from '../../types';
 class HyperliquidWS {
   serviceName = 'HyperliquidWS';
   pingPongTimeout = 60_000;
-  symbolToPrice: Map<string, number>;
   lastUpdMinute: Map<string, number>;
   ws: WebSocket;
   coinsModel: Coins;
@@ -20,7 +19,6 @@ class HyperliquidWS {
 
   constructor(coins: Coin[], ca: CandleAggregator) {
     this.coins = coins;
-    this.symbolToPrice = new Map();
     this.lastUpdMinute = new Map();
     this.n = new Map();
     this.lastCandles = new Map();
@@ -82,38 +80,32 @@ class HyperliquidWS {
         break;
       case 'candle':
         const { data } = wsMessage;
-        const price =
-          (parseFloat(data.o) +
-            parseFloat(data.h) +
-            parseFloat(data.l) +
-            parseFloat(data.c)) /
-          4;
 
-        if (data.n < (this.n.get(data.s) || 0)) {
+        const existN = this.n.get(data.s) || 0;
+        if (data.n < existN) {
+          const lastCandle = this.lastCandles.get(data.s);
           const now = new Date();
 
           this.candleAggregator.set({
             exchange: this.serviceName,
             // @ts-ignore
-            coin: this.lastCandle.s,
-            price,
+            coin: lastCandle.s,
+            o: parseFloat(data.o),
+            h: parseFloat(data.h),
+            l: parseFloat(data.l),
+            c: parseFloat(data.c),
             // @ts-ignore
-            volume: this.lastCandle.v,
+            volume: lastCandle.v,
             // @ts-ignore
-            nTrades: this.lastCandle.n,
+            nTrades: lastCandle.n,
             // @ts-ignore
-            extTs: new Date(this.lastCandle.T),
+            extTs: new Date(lastCandle.T),
             createTs: now,
           });
-
-          this.n.set(data.s, data.n);
-          this.lastCandles.set(data.s, data);
-          this.symbolToPrice.set(data.s, price);
-          return;
         }
 
         this.lastCandles.set(data.s, data);
-        this.n.set(data.s, data);
+        this.n.set(data.s, data.n);
         break;
     }
   }
