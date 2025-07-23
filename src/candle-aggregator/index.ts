@@ -61,8 +61,6 @@ export default class CandleAggregator {
     // BTC->Candle (mid price by hypeliquid, binance...)
     const totalMidPriceData: Map<string, Candle> = new Map();
 
-    console.log(this.coinPrices);
-
     for (const [coin, inner] of this.coinPrices.entries()) {
       if (!totalMidPriceData.get(coin)) {
         //@ts-ignore
@@ -113,8 +111,6 @@ export default class CandleAggregator {
         c: totalMidPriceData.get(coin).c / exchangeCount,
       });
     }
-
-    console.log(totalMidPriceData);
 
     await this.candles.setMany([...totalMidPriceData.values()]);
 
